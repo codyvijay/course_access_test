@@ -37,4 +37,4 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           body: |
             Access request approved!
-            Invitation sent to **${{ steps.extract.outputs.username }}** for repository **your-private-repo**.
+            Invitation sent to **${{ steps.extract.outputs.username }}** for repository **the-course-private-repo**.
