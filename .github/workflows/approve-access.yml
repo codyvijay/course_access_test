@@ -1,0 +1,40 @@
+name: Approve Access
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  approve-access:
+    # Trigger only when the comment starts with /approve
+    # AND the commenter is you (the instructor/admin)
+    if: |
+      startsWith(github.event.comment.body, '/approve') &&
+      github.event.comment.user.login == 'your-github-username'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract username
+        id: extract
+        run: |
+          COMMENT="${{ github.event.comment.body }}"
+          USERNAME=$(echo "$COMMENT" | awk '{print $2}')
+          echo "username=$USERNAME" >> $GITHUB_OUTPUT
+
+      - name: Add collaborator
+        uses: peter-evans/add-collaborator@v2
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+          # Replace this with your private repo name (owner/repo)
+          repo: cody-vijay/demo_project
+          username: ${{ steps.extract.outputs.username }}
+          permission: pull
+
+      - name: Confirm success
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            Access request approved!
+            Invitation sent to **${{ steps.extract.outputs.username }}** for repository **your-private-repo**.
