@@ -28,11 +28,12 @@ jobs:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           USERNAME: ${{ steps.extract.outputs.username }}
         run: |
-          curl -X PUT \
+          curl -L -X PUT \
             -H "Authorization: token $ACCESS_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/codyvijay/demo_project/collaborators/$USERNAME \
             -d '{"permission":"pull"}'
+
 
       - name: Confirm success
         uses: peter-evans/create-or-update-comment@v3
