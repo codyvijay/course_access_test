@@ -4,10 +4,12 @@ on:
   issue_comment:
     types: [created]
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   approve-access:
-    # Trigger only when the comment starts with /approve
-    # AND the commenter is you (the instructor/admin)
     if: |
       startsWith(github.event.comment.body, '/approve') &&
       github.event.comment.user.login == 'codyvijay'
@@ -22,11 +24,10 @@ jobs:
           echo "username=$USERNAME" >> $GITHUB_OUTPUT
 
       - name: Add collaborator
-        uses: peter-evans/add-collaborator@v2
+        uses: peter-evans/add-collaborator@v3
         with:
           token: ${{ secrets.ACCESS_TOKEN }}
-          # Replace this with your private repo name (owner/repo)
-          repo: cody-vijay/demo_project
+          repo: codyvijay/demo_project
           username: ${{ steps.extract.outputs.username }}
           permission: pull
 
@@ -37,4 +38,4 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           body: |
             Access request approved!
-            Invitation sent to **${{ steps.extract.outputs.username }}** for repository **the-course-private-repo**.
+            Invitation sent to **${{ steps.extract.outputs.username }}** for repository **demo_project**.
