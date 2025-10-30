@@ -10,7 +10,7 @@ jobs:
     # AND the commenter is you (the instructor/admin)
     if: |
       startsWith(github.event.comment.body, '/approve') &&
-      github.event.comment.user.login == 'your-github-username'
+      github.event.comment.user.login == 'codyvijay'
     runs-on: ubuntu-latest
 
     steps:
