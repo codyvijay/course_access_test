@@ -20,22 +20,23 @@ jobs:
         id: extract
         run: |
           COMMENT="${{ github.event.comment.body }}"
-          USERNAME=$(echo "$COMMENT" | awk '{print $2}' | sed 's/@//')
+          USERNAME=$(echo "$COMMENT" | awk '{print $2}')
           echo "username=$USERNAME" >> $GITHUB_OUTPUT
 
       - name: Add collaborator via GitHub API
-        id: addcollab
+        id: add_collaborator
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           USERNAME: ${{ steps.extract.outputs.username }}
         run: |
-          STATUS_CODE=$(curl -L -s -o /dev/null -w "%{http_code}" \
-            -X PUT \
+          RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L -X PUT \
             -H "Authorization: token $ACCESS_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/codyvijay/demo_project/collaborators/$USERNAME \
             -d '{"permission":"pull"}')
-          echo "status=$STATUS_CODE" >> $GITHUB_OUTPUT
+
+          echo "Response code: $RESPONSE_CODE"
+          echo "response_code=$RESPONSE_CODE" >> $GITHUB_OUTPUT
 
       - name: Confirm success
         uses: peter-evans/create-or-update-comment@v3
@@ -43,6 +44,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
           body: |
-            ${{ steps.addcollab.outputs.status == '201' && 
-                format('Invitation sent to **{0}** for private repository.', steps.extract.outputs.username) || 
-                format('Something went wrong. (Status: {0})', steps.addcollab.outputs.status) }}
+            ${{ steps.add_collaborator.outputs.response_code == '201' && 
+              format('Invitation sent to **{0}** for private course repository.', steps.extract.outputs.username) ||
+              steps.add_collaborator.outputs.response_code == '204' && 
+              format('User **{0}** already has access to private course repository.', steps.extract.outputs.username) ||
+              format('Something went wrong (Status code: {0}).', steps.add_collaborator.outputs.response_code)
+            }}
