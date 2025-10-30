@@ -20,20 +20,22 @@ jobs:
         id: extract
         run: |
           COMMENT="${{ github.event.comment.body }}"
-          USERNAME=$(echo "$COMMENT" | awk '{print $2}')
+          USERNAME=$(echo "$COMMENT" | awk '{print $2}' | sed 's/@//')
           echo "username=$USERNAME" >> $GITHUB_OUTPUT
 
       - name: Add collaborator via GitHub API
+        id: addcollab
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           USERNAME: ${{ steps.extract.outputs.username }}
         run: |
-          curl -L -X PUT \
+          STATUS_CODE=$(curl -L -s -o /dev/null -w "%{http_code}" \
+            -X PUT \
             -H "Authorization: token $ACCESS_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/codyvijay/demo_project/collaborators/$USERNAME \
-            -d '{"permission":"pull"}'
-
+            -d '{"permission":"pull"}')
+          echo "status=$STATUS_CODE" >> $GITHUB_OUTPUT
 
       - name: Confirm success
         uses: peter-evans/create-or-update-comment@v3
@@ -41,5 +43,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.issue.number }}
           body: |
-            Access request approved!
-            Invitation sent to **${{ steps.extract.outputs.username }}** for repository **demo_project**.
+            ${{ steps.addcollab.outputs.status == '201' && 
+                format('Invitation sent to **{0}** for private repository.', steps.extract.outputs.username) || 
+                format('Something went wrong. (Status: {0})', steps.addcollab.outputs.status) }}
